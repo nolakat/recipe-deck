@@ -8,8 +8,9 @@ import {
   SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, arrayMove,
 } from '@dnd-kit/sortable';
 import { SortableCard, OverlayCard } from './components/RecipeCard';
-import recipes from './data/recipes';
+import recipesData from './data/recipes';
 import IngredientCard from './components/IngredientCard';
+import CreateRecipeModal from './components/CreateRecipeModal';
 import ShoppingList from './components/ShoppingList';
 import './App.css';
 
@@ -59,6 +60,11 @@ function parseDropId(idStr) {
 }
 
 function App() {
+  const [recipes, setRecipes] = useState(recipesData);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState(null);
+  const [deletingRecipeId, setDeletingRecipeId] = useState(null);
+
   // selectedRecipes: [{ id, day, slot }, ...]
   const [selectedRecipes, setSelectedRecipes] = useState([]);
   const [shoppingList, setShoppingList] = useState([]);
@@ -78,7 +84,7 @@ function App() {
     return shoppingList.some(s => s.name === ing.name && s.qty === ing.qty);
   }, [shoppingList]);
 
-  const getSpan = (recipe) => Math.ceil(recipe.servings / people);
+  const getSpan = (recipe) => recipe.category === 'treats' ? 1 : Math.ceil(recipe.servings / people);
 
   // Check if a recipe is allowed in a given slot
   const recipeMatchesSlot = (recipeId, slot) => {
@@ -184,6 +190,16 @@ function App() {
     setShoppingList(prev =>
       prev.map((item, i) => i === index ? { ...item, checked: !item.checked } : item)
     );
+  };
+
+  const handleDeleteRecipe = (id) => {
+    setRecipes(prev => prev.filter(r => r.id !== id));
+    setSelectedRecipes(prev => prev.filter(e => e.id !== id));
+  };
+
+  const handleUpdateRecipe = (updatedRecipe) => {
+    setRecipes(prev => prev.map(r => r.id === updatedRecipe.id ? { ...r, ...updatedRecipe } : r));
+    setEditingRecipe(null);
   };
 
   const selectedRecipeData = selectedRecipes.map(entry => ({
@@ -305,7 +321,10 @@ function App() {
           </div>
 
           <div className="deck-area">
-            <div className="section-label">Recipe Cards</div>
+            <div className="section-label">
+              Recipe Cards
+              <button className="btn-add-recipe" onClick={() => setShowCreateModal(true)}>+ Add Recipe</button>
+            </div>
             <div className="filter-pills">
               {categories.map(cat => (
                 <button
@@ -321,7 +340,7 @@ function App() {
               <SortableContext items={filteredDeckRecipes.map(r => r.id)} strategy={horizontalListSortingStrategy}>
                 {filteredDeckRecipes.length > 0 ? (
                   filteredDeckRecipes.map((recipe) => (
-                    <SortableCard key={recipe.id} recipe={recipe} from="deck" />
+                    <SortableCard key={recipe.id} recipe={recipe} from="deck" onEdit={setEditingRecipe} onDelete={setDeletingRecipeId} />
                   ))
                 ) : (
                   <div className="drop-zone-prompt">
@@ -366,6 +385,40 @@ function App() {
           </div>
         </div>
       </div>
+
+      {showCreateModal && (
+        <CreateRecipeModal
+          onClose={() => setShowCreateModal(false)}
+          onSave={(newRecipe) => {
+            setRecipes(prev => [...prev, newRecipe]);
+            setShowCreateModal(false);
+          }}
+        />
+      )}
+
+      {editingRecipe && (
+        <CreateRecipeModal
+          recipe={editingRecipe}
+          onClose={() => setEditingRecipe(null)}
+          onSave={handleUpdateRecipe}
+        />
+      )}
+
+      {deletingRecipeId && (
+        <div className="modal-backdrop" onClick={() => setDeletingRecipeId(null)}>
+          <div className="modal confirm-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Delete Recipe</h2>
+              <button className="modal-close" onClick={() => setDeletingRecipeId(null)}>×</button>
+            </div>
+            <p className="confirm-text">Are you sure you want to delete <strong>{recipes.find(r => r.id === deletingRecipeId)?.name}</strong>? This cannot be undone.</p>
+            <div className="modal-actions">
+              <button className="btn-modal-cancel" onClick={() => setDeletingRecipeId(null)}>Cancel</button>
+              <button className="btn-modal-delete" onClick={() => { handleDeleteRecipe(deletingRecipeId); setDeletingRecipeId(null); }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ShoppingList
         items={shoppingList}
