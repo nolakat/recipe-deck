@@ -3,17 +3,19 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 function CardContent({ recipe, onEdit, onDelete }) {
+  const isPantry = recipe.category === 'pantry';
   return (
     <>
       <div>
         <div className="card-emoji-row">
           <span className="card-emoji">{recipe.emoji}</span>
           <span className="card-category-badge">
-            {recipe.category === 'breakfast' ? '☀️' : recipe.category === 'lunch' ? '🌤️' : recipe.category === 'dinner' ? '🌙' : '🍬'}
+            {recipe.category === 'breakfast' ? '☀️' : recipe.category === 'lunch' ? '🌤️' : recipe.category === 'dinner' ? '🌙' : recipe.category === 'pantry' ? '🛒' : '🍬'}
           </span>
         </div>
         <div className="card-title">{recipe.name}</div>
-        <div className="card-desc">{recipe.desc}</div>
+        {!isPantry && recipe.desc && <div className="card-desc">{recipe.desc}</div>}
+        {isPantry && recipe.qty && <div className="card-qty">{recipe.qty}</div>}
       </div>
       {(onEdit || onDelete) && (
         <div className="card-actions">
@@ -21,10 +23,12 @@ function CardContent({ recipe, onEdit, onDelete }) {
           {onDelete && <button className="card-action-btn" onClick={(e) => { e.stopPropagation(); onDelete(recipe.id); }} title="Delete">🗑</button>}
         </div>
       )}
-      <div className="card-meta">
-        <span className="time">⏱ {recipe.time}</span>
-        <span className="servings">👤 {recipe.servings}</span>
-      </div>
+      {!isPantry && (
+        <div className="card-meta">
+          <span className="time">⏱ {recipe.time}</span>
+          <span className="servings">👤 {recipe.servings}</span>
+        </div>
+      )}
     </>
   );
 }

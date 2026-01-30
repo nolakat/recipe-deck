@@ -9,8 +9,10 @@ import {
 } from '@dnd-kit/sortable';
 import { SortableCard, OverlayCard } from './components/RecipeCard';
 import recipesData from './data/recipes';
+import staplesData from './data/staples';
 import IngredientCard from './components/IngredientCard';
 import CreateRecipeModal from './components/CreateRecipeModal';
+import CreateStapleModal from './components/CreateStapleModal';
 import ShoppingList from './components/ShoppingList';
 import './App.css';
 
@@ -28,9 +30,9 @@ function customCollision(args) {
   // First try pointerWithin for precision
   const pointerCollisions = pointerWithin(args);
   if (pointerCollisions.length > 0) {
-    // Prefer droppable zone ids (day-X-Y or deck-zone) over card ids
+    // Prefer droppable zone ids (day-X-Y or deck-zone/staple-deck-zone) over card ids
     const zoneHit = pointerCollisions.find(c =>
-      String(c.id).startsWith('day-') || String(c.id) === 'deck-zone'
+      String(c.id).startsWith('day-') || String(c.id) === 'deck-zone' || String(c.id) === 'staple-deck-zone'
     );
     if (zoneHit) return [zoneHit];
     return pointerCollisions;
@@ -38,7 +40,7 @@ function customCollision(args) {
   // Fallback to rect intersection
   const rectCollisions = rectIntersection(args);
   const zoneHit = rectCollisions.find(c =>
-    String(c.id).startsWith('day-') || String(c.id) === 'deck-zone'
+    String(c.id).startsWith('day-') || String(c.id) === 'deck-zone' || String(c.id) === 'staple-deck-zone'
   );
   if (zoneHit) return [zoneHit];
   return rectCollisions;
@@ -61,8 +63,11 @@ function parseDropId(idStr) {
 
 function App() {
   const [recipes, setRecipes] = useState(recipesData);
+  const [staples, setStaples] = useState(staplesData);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateStapleModal, setShowCreateStapleModal] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
+  const [editingStaple, setEditingStaple] = useState(null);
   const [deletingRecipeId, setDeletingRecipeId] = useState(null);
 
   // selectedRecipes: [{ id, day, slot }, ...]
@@ -74,22 +79,33 @@ function App() {
 
   const [people, setPeople] = useState(1);
   const [activeFilter, setActiveFilter] = useState(null);
+  const [recipesCollapsed, setRecipesCollapsed] = useState(false);
+  const [staplesCollapsed, setStaplesCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { distance: 8 } })
   );
 
+  // Combined lookup: find item in recipes or staples
+  const findItem = useCallback((id) => {
+    return recipes.find(r => r.id === id) || staples.find(s => s.id === id);
+  }, [recipes, staples]);
+
   const isInList = useCallback((ing) => {
     return shoppingList.some(s => s.name === ing.name && s.qty === ing.qty);
   }, [shoppingList]);
 
-  const getSpan = (recipe) => recipe.category === 'treats' ? 1 : Math.ceil(recipe.servings / people);
+  const getSpan = (recipe) => {
+    if (recipe.category === 'treats' || recipe.category === 'pantry') return 1;
+    return Math.ceil(recipe.servings / people);
+  };
 
   // Check if a recipe is allowed in a given slot
   const recipeMatchesSlot = (recipeId, slot) => {
-    const recipe = recipes.find(r => r.id === recipeId);
-    return recipe && recipe.category === slot;
+    const item = findItem(recipeId);
+    return item && item.category === slot;
   };
 
   const handleDragStart = (event) => {
@@ -109,9 +125,9 @@ function App() {
     const overIdStr = String(over.id);
     const isInSelected = selectedRecipes.some(e => e.id === id);
     const parsed = parseDropId(overIdStr);
-    const isDeckZone = overIdStr === 'deck-zone';
+    const isDeckZone = overIdStr === 'deck-zone' || overIdStr === 'staple-deck-zone';
 
-    if (from === 'deck') {
+    if (from === 'deck' || from === 'staple-deck') {
       if (parsed && recipeMatchesSlot(id, parsed.slot) && !isInSelected) {
         setSelectedRecipes(prev => [...prev, { id, day: parsed.day, slot: parsed.slot }]);
       } else if (parsed && recipeMatchesSlot(id, parsed.slot) && isInSelected) {
@@ -138,13 +154,13 @@ function App() {
     } else {
       const overIdStr = String(over.id);
       const parsed = parseDropId(overIdStr);
+      const isDeckZone = overIdStr === 'deck-zone' || overIdStr === 'staple-deck-zone';
 
-      if (from === 'selected' && overIdStr === 'deck-zone') {
+      if (from === 'selected' && isDeckZone) {
         setSelectedRecipes(prev => prev.filter(e => e.id !== id));
       } else if (from === 'selected' && parsed && recipeMatchesSlot(id, parsed.slot)) {
         setSelectedRecipes(prev => prev.map(e => e.id === id ? { ...e, day: parsed.day, slot: parsed.slot } : e));
-      } else if (from === 'deck' && parsed && recipeMatchesSlot(id, parsed.slot)) {
-        // Ensure the card lands where it was last dragged over
+      } else if ((from === 'deck' || from === 'staple-deck') && parsed && recipeMatchesSlot(id, parsed.slot)) {
         setSelectedRecipes(prev => {
           const exists = prev.some(e => e.id === id);
           if (exists) return prev.map(e => e.id === id ? { ...e, day: parsed.day, slot: parsed.slot } : e);
@@ -173,9 +189,11 @@ function App() {
 
   const addAllIngredients = () => {
     if (selectedRecipes.length === 0) return;
-    const allIngs = selectedRecipes.flatMap(entry =>
-      recipes.find(r => r.id === entry.id).ingredients
-    );
+    const allIngs = selectedRecipes.flatMap(entry => {
+      const item = findItem(entry.id);
+      if (item.category === 'pantry') return [];
+      return item.ingredients;
+    });
     setShoppingList(prev => {
       const newItems = allIngs.filter(
         ing => !prev.some(s => s.name === ing.name && s.qty === ing.qty)
@@ -194,6 +212,7 @@ function App() {
 
   const handleDeleteRecipe = (id) => {
     setRecipes(prev => prev.filter(r => r.id !== id));
+    setStaples(prev => prev.filter(s => s.id !== id));
     setSelectedRecipes(prev => prev.filter(e => e.id !== id));
   };
 
@@ -202,19 +221,26 @@ function App() {
     setEditingRecipe(null);
   };
 
-  const selectedRecipeData = selectedRecipes.map(entry => ({
-    ...recipes.find(r => r.id === entry.id),
-    day: entry.day,
-    slot: entry.slot,
-  }));
+  const handleUpdateStaple = (updatedStaple) => {
+    setStaples(prev => prev.map(s => s.id === updatedStaple.id ? { ...s, ...updatedStaple } : s));
+    setEditingStaple(null);
+  };
+
+  // Build selected data from both recipes and staples
+  const selectedRecipeData = selectedRecipes.map(entry => {
+    const item = findItem(entry.id);
+    return item ? { ...item, day: entry.day, slot: entry.slot } : null;
+  }).filter(Boolean);
+
   const selectedIds = selectedRecipes.map(e => e.id);
   const deckRecipes = recipes.filter(r => !selectedIds.includes(r.id));
+  const deckStaples = staples.filter(s => !selectedIds.includes(s.id));
 
   const categories = [
     { key: null, label: 'All' },
     { key: 'breakfast', label: '☀️ Breakfast' },
     { key: 'lunch', label: '🌤️ Lunch' },
-    { key: 'dinner', label: '🌙 Dinner' },
+    { key: 'dinner', label: '🌙 dinner' },
     { key: 'treats', label: '🍬 Treats' },
   ];
 
@@ -225,7 +251,14 @@ function App() {
   // Get recipes for a specific day + slot
   const recipesForSlot = (day, slot) => selectedRecipes
     .filter(e => e.day === day && e.slot === slot)
-    .map(e => recipes.find(r => r.id === e.id));
+    .map(e => findItem(e.id))
+    .filter(Boolean);
+
+  // All pantry items on the plan (day=0)
+  const pantryOnPlan = selectedRecipes
+    .filter(e => e.slot === 'pantry')
+    .map(e => findItem(e.id))
+    .filter(Boolean);
 
   return (
     <div className="app">
@@ -306,7 +339,7 @@ function App() {
                                 <SortableCard
                                   recipe={recipe}
                                   from="selected"
-                                  isGhost={activeRecipe && activeRecipe.id === recipe.id && fromRef.current === 'deck'}
+                                  isGhost={activeRecipe && activeRecipe.id === recipe.id && (fromRef.current === 'deck' || fromRef.current === 'staple-deck')}
                                 />
                               </div>
                             );
@@ -318,37 +351,90 @@ function App() {
                 </div>
               ))}
             </div>
+            {/* Pantry row — inside grid, spanning all day columns */}
+            <div className="pantry-row-label slot-label" title="Pantry">🛒</div>
+            <DroppableArea
+              id="day-0-pantry"
+              className={`meal-slot pantry-slot${activeRecipe ? (activeRecipe.category === 'pantry' ? ' slot-match' : ' slot-mismatch') : ''}`}
+            >
+              <SortableContext
+                items={pantryOnPlan.map(r => r.id)}
+                strategy={horizontalListSortingStrategy}
+              >
+                {pantryOnPlan.map(item => (
+                  <div key={item.id} className="day-card-wrapper">
+                    <SortableCard
+                      recipe={item}
+                      from="selected"
+                      isGhost={activeRecipe && activeRecipe.id === item.id && fromRef.current === 'staple-deck'}
+                    />
+                  </div>
+                ))}
+              </SortableContext>
+            </DroppableArea>
           </div>
 
           <div className="deck-area">
             <div className="section-label">
+              <button className="collapse-toggle" onClick={() => setRecipesCollapsed(c => !c)}>{recipesCollapsed ? '▸' : '▾'}</button>
               Recipe Cards
               <button className="btn-add-recipe" onClick={() => setShowCreateModal(true)}>+ Add Recipe</button>
             </div>
-            <div className="filter-pills">
-              {categories.map(cat => (
-                <button
-                  key={cat.key ?? 'all'}
-                  className={`filter-pill${activeFilter === cat.key ? ' active' : ''}`}
-                  onClick={() => setActiveFilter(cat.key)}
-                >
-                  {cat.label}
-                </button>
-              ))}
+            {!recipesCollapsed && (
+              <>
+                <div className="filter-pills">
+                  {categories.map(cat => (
+                    <button
+                      key={cat.key ?? 'all'}
+                      className={`filter-pill${activeFilter === cat.key ? ' active' : ''}`}
+                      onClick={() => setActiveFilter(cat.key)}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+                <DroppableArea id="deck-zone" className="deck-container">
+                  <SortableContext items={filteredDeckRecipes.map(r => r.id)} strategy={horizontalListSortingStrategy}>
+                    {filteredDeckRecipes.length > 0 ? (
+                      filteredDeckRecipes.map((recipe) => (
+                        <SortableCard key={recipe.id} recipe={recipe} from="deck" onEdit={setEditingRecipe} onDelete={setDeletingRecipeId} />
+                      ))
+                    ) : (
+                      <div className="drop-zone-prompt">
+                        {deckRecipes.length === 0 ? 'All cards selected!' : 'No cards in this category'}
+                      </div>
+                    )}
+                  </SortableContext>
+                </DroppableArea>
+              </>
+            )}
+          </div>
+
+          <div className="deck-area staple-deck-area">
+            <div className="section-label">
+              <button className="collapse-toggle" onClick={() => setStaplesCollapsed(c => !c)}>{staplesCollapsed ? '▸' : '▾'}</button>
+              Pantry Staples
+              <button className="btn-add-recipe" onClick={() => setShowCreateStapleModal(true)}>+ Add Staple</button>
             </div>
-            <DroppableArea id="deck-zone" className="deck-container">
-              <SortableContext items={filteredDeckRecipes.map(r => r.id)} strategy={horizontalListSortingStrategy}>
-                {filteredDeckRecipes.length > 0 ? (
-                  filteredDeckRecipes.map((recipe) => (
-                    <SortableCard key={recipe.id} recipe={recipe} from="deck" onEdit={setEditingRecipe} onDelete={setDeletingRecipeId} />
-                  ))
-                ) : (
-                  <div className="drop-zone-prompt">
-                    {deckRecipes.length === 0 ? 'All cards selected!' : 'No cards in this category'}
-                  </div>
-                )}
-              </SortableContext>
-            </DroppableArea>
+            {!staplesCollapsed && (
+              <DroppableArea id="staple-deck-zone" className="staple-grid">
+                <SortableContext items={deckStaples.map(s => s.id)} strategy={horizontalListSortingStrategy}>
+                  {deckStaples.length > 0 ? (
+                    deckStaples.map((staple) => (
+                      <SortableCard
+                        key={staple.id}
+                        recipe={staple}
+                        from="staple-deck"
+                        onEdit={(item) => setEditingStaple(item)}
+                        onDelete={setDeletingRecipeId}
+                      />
+                    ))
+                  ) : (
+                    <div className="drop-zone-prompt">All staples on the plan!</div>
+                  )}
+                </SortableContext>
+              </DroppableArea>
+            )}
           </div>
 
           <DragOverlay dropAnimation={null}>
@@ -359,14 +445,14 @@ function App() {
         <div className="ingredients-area">
           <div className="section-label">Ingredients</div>
           <div>
-            {selectedRecipeData.length > 0 ? (
-              selectedRecipeData.map((recipe) => (
-                <div key={recipe.id}>
-                  <div className="ingredients-recipe-label">{recipe.emoji} {recipe.name}</div>
+            {selectedRecipeData.some(item => item.category !== 'pantry') ? (
+              selectedRecipeData.filter(item => item.category !== 'pantry').map((item) => (
+                <div key={item.id}>
+                  <div className="ingredients-recipe-label">{item.emoji} {item.name}</div>
                   <div className="ingredients-container">
-                    {recipe.ingredients.map((ing, i) => (
+                    {item.ingredients.map((ing, i) => (
                       <IngredientCard
-                        key={`${recipe.id}-${ing.name}-${ing.qty}`}
+                        key={`${item.id}-${ing.name}-${ing.qty}`}
                         ingredient={ing}
                         isAdded={isInList(ing)}
                         onClick={() => toggleIngredient(ing)}
@@ -404,14 +490,32 @@ function App() {
         />
       )}
 
+      {showCreateStapleModal && (
+        <CreateStapleModal
+          onClose={() => setShowCreateStapleModal(false)}
+          onSave={(newStaple) => {
+            setStaples(prev => [...prev, newStaple]);
+            setShowCreateStapleModal(false);
+          }}
+        />
+      )}
+
+      {editingStaple && (
+        <CreateStapleModal
+          staple={editingStaple}
+          onClose={() => setEditingStaple(null)}
+          onSave={handleUpdateStaple}
+        />
+      )}
+
       {deletingRecipeId && (
         <div className="modal-backdrop" onClick={() => setDeletingRecipeId(null)}>
           <div className="modal confirm-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Delete Recipe</h2>
+              <h2>Delete</h2>
               <button className="modal-close" onClick={() => setDeletingRecipeId(null)}>×</button>
             </div>
-            <p className="confirm-text">Are you sure you want to delete <strong>{recipes.find(r => r.id === deletingRecipeId)?.name}</strong>? This cannot be undone.</p>
+            <p className="confirm-text">Are you sure you want to delete <strong>{findItem(deletingRecipeId)?.name}</strong>? This cannot be undone.</p>
             <div className="modal-actions">
               <button className="btn-modal-cancel" onClick={() => setDeletingRecipeId(null)}>Cancel</button>
               <button className="btn-modal-delete" onClick={() => { handleDeleteRecipe(deletingRecipeId); setDeletingRecipeId(null); }}>Delete</button>
@@ -420,6 +524,12 @@ function App() {
         </div>
       )}
 
+      <button className="sidebar-toggle-btn" onClick={() => setSidebarOpen(o => !o)}>
+        🛒 {shoppingList.length > 0 && <span className="sidebar-badge">{shoppingList.length}</span>}
+      </button>
+
+      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+
       <ShoppingList
         items={shoppingList}
         onToggleCheck={toggleCheck}
@@ -427,6 +537,8 @@ function App() {
         onClear={clearList}
         onAddAll={addAllIngredients}
         hasActiveRecipe={selectedRecipes.length > 0}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
     </div>
   );

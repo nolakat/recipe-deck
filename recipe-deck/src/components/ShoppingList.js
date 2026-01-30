@@ -1,13 +1,14 @@
 import React from 'react';
 
-function ShoppingList({ items, onToggleCheck, onRemove, onClear, onAddAll, hasActiveRecipe }) {
+function ShoppingList({ items, onToggleCheck, onRemove, onClear, onAddAll, hasActiveRecipe, isOpen, onClose }) {
   return (
-    <div className="sidebar">
+    <div className={`sidebar${isOpen ? ' open' : ''}`}>
       <div className="sidebar-header">
         <h2>Shopping List</h2>
-        <div className="item-count">
-          {items.length} item{items.length !== 1 ? 's' : ''}
-        </div>
+        <button className="sidebar-close-btn" onClick={onClose}>×</button>
+      </div>
+      <div className="sidebar-count">
+        {items.length} item{items.length !== 1 ? 's' : ''}
       </div>
       <div className="shopping-list">
         {items.length === 0 ? (
