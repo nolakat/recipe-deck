@@ -5,7 +5,7 @@ import {
   pointerWithin, rectIntersection,
 } from '@dnd-kit/core';
 import {
-  SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, arrayMove,
+  SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { SortableCard, OverlayCard } from './components/RecipeCard';
 import recipesData from './data/recipes';
@@ -292,21 +292,6 @@ function App() {
       const idx = prev.findIndex(s => s.name === ing.name && s.qty === ing.qty);
       if (idx > -1) return prev.filter((_, i) => i !== idx);
       return [...prev, { ...ing }];
-    });
-  };
-
-  const addAllIngredients = () => {
-    if (selectedRecipes.length === 0) return;
-    const allIngs = selectedRecipes.flatMap(entry => {
-      const item = findItem(entry.id);
-      if (item.category === 'pantry') return [];
-      return item.ingredients;
-    });
-    setShoppingList(prev => {
-      const newItems = allIngs.filter(
-        ing => !prev.some(s => s.name === ing.name && s.qty === ing.qty)
-      );
-      return [...prev, ...newItems.map(ing => ({ ...ing }))];
     });
   };
 
