@@ -534,7 +534,10 @@ function App() {
           <div className="section-label">Ingredients</div>
           <div>
             {selectedRecipeData.some(item => item.category !== 'pantry') ? (
-              selectedRecipeData.filter(item => item.category !== 'pantry').map((item) => (
+              selectedRecipeData.filter(item => item.category !== 'pantry').sort((a, b) => {
+                const order = { breakfast: 0, lunch: 1, dinner: 2, treats: 3 };
+                return (order[a.category] ?? 4) - (order[b.category] ?? 4);
+              }).map((item) => (
                 <div key={item.id}>
                   <div className="ingredients-recipe-label">{item.emoji} {item.name}</div>
                   <div className="ingredients-container">

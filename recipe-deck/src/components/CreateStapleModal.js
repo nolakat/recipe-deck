@@ -5,6 +5,7 @@ function CreateStapleModal({ onSave, onClose, staple }) {
   const [name, setName] = useState(staple ? staple.name : '');
   const [emoji, setEmoji] = useState(staple ? staple.emoji : '🛒');
   const [qty, setQty] = useState(staple ? staple.qty : '');
+  const [favorite, setFavorite] = useState(staple ? !!staple.favorite : false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -15,6 +16,7 @@ function CreateStapleModal({ onSave, onClose, staple }) {
       name: name.trim(),
       qty: qty.trim(),
       category: 'pantry',
+      favorite,
     });
   };
 
@@ -39,6 +41,12 @@ function CreateStapleModal({ onSave, onClose, staple }) {
           <div className="modal-field">
             <label>Quantity</label>
             <input type="text" value={qty} onChange={e => setQty(e.target.value)} placeholder="e.g. 1 loaf" required />
+          </div>
+          <div className="modal-field modal-checkbox-field">
+            <label>
+              <input type="checkbox" checked={favorite} onChange={e => setFavorite(e.target.checked)} />
+              Favorite
+            </label>
           </div>
           <div className="modal-actions">
             <button type="button" className="btn-modal-cancel" onClick={onClose}>Cancel</button>

@@ -12,6 +12,7 @@ function CreateRecipeModal({ onSave, onClose, recipe }) {
   const [name, setName] = useState(recipe ? recipe.name : '');
   const [servings, setServings] = useState(recipe ? recipe.servings : 2);
   const [category, setCategory] = useState(recipe ? recipe.category : 'breakfast');
+  const [favorite, setFavorite] = useState(recipe ? !!recipe.favorite : false);
   const [ingredients, setIngredients] = useState(recipe ? recipe.ingredients.map(i => ({ ...i })) : [{ name: '', qty: '' }]);
 
   const addRow = () => setIngredients(prev => [...prev, { name: '', qty: '' }]);
@@ -36,6 +37,7 @@ function CreateRecipeModal({ onSave, onClose, recipe }) {
       desc: name.trim(),
       servings: Number(servings),
       category,
+      favorite,
       time: isEdit ? recipe.time : undefined,
       ingredients: validIngredients,
     });
@@ -67,6 +69,12 @@ function CreateRecipeModal({ onSave, onClose, recipe }) {
                 <option value="treats">🍬 Treats</option>
               </select>
             </div>
+          </div>
+          <div className="modal-field modal-checkbox-field">
+            <label>
+              <input type="checkbox" checked={favorite} onChange={e => setFavorite(e.target.checked)} />
+              Favorite
+            </label>
           </div>
           <div className="modal-field">
             <label>Ingredients</label>

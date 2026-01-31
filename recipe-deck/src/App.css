@@ -1262,3 +1262,38 @@ body::after {
   background: rgba(74,124,89,0.06);
   border-radius: 12px;
 }
+
+/* Favorite recipe highlight */
+.recipe-card.favorite {
+  border-color: rgba(74, 124, 89, 0.35);
+  background: linear-gradient(135deg, #fffef9 0%, var(--green-light) 100%);
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(74, 124, 89, 0.1);
+}
+
+.recipe-card.favorite::before {
+  background: rgba(74, 124, 89, 0.15);
+}
+
+.card-favorite-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  color: var(--green);
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Favorite checkbox in modal */
+.modal-checkbox-field label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.modal-checkbox-field input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}

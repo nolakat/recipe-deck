@@ -23,6 +23,7 @@ function CardContent({ recipe, onEdit, onDelete }) {
           {onDelete && <button className="card-action-btn" onClick={(e) => { e.stopPropagation(); onDelete(recipe.id); }} title="Delete">🗑</button>}
         </div>
       )}
+      {recipe.favorite && <span className="card-favorite-badge">💚</span>}
       {!isPantry && (
         <div className="card-meta">
           <span className="time">⏱ {recipe.time}</span>
@@ -49,6 +50,7 @@ export function SortableCard({ recipe, isGhost, from = 'selected', onEdit, onDel
 
   const className = [
     'recipe-card',
+    recipe.favorite && 'favorite',
     (isDragging || isGhost) && 'drag-source',
   ].filter(Boolean).join(' ');
 
