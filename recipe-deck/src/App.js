@@ -106,6 +106,7 @@ function App() {
   const [recipesCollapsed, setRecipesCollapsed] = useState(false);
   const [staplesCollapsed, setStaplesCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -464,7 +465,7 @@ function App() {
               Meal Plan
               <button className="clear-selected" onClick={autoFillPlan}>Auto-fill</button>
               {selectedRecipes.length > 0 && (
-                <button className="clear-selected" onClick={() => setSelectedRecipes([])}>Clear all</button>
+                <button className="clear-selected" onClick={() => setShowClearConfirm(true)}>Clear all</button>
               )}
             </div>
             <div className="day-grid">
@@ -693,6 +694,22 @@ function App() {
             <div className="modal-actions">
               <button className="btn-modal-cancel" onClick={() => setDeletingRecipeId(null)}>Cancel</button>
               <button className="btn-modal-delete" onClick={() => { handleDeleteRecipe(deletingRecipeId); setDeletingRecipeId(null); }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showClearConfirm && (
+        <div className="modal-backdrop" onClick={() => setShowClearConfirm(false)}>
+          <div className="modal confirm-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Clear Meal Plan</h2>
+              <button className="modal-close" onClick={() => setShowClearConfirm(false)}>×</button>
+            </div>
+            <p className="confirm-text">Are you sure you want to clear all cards from the meal plan? This cannot be undone.</p>
+            <div className="modal-actions">
+              <button className="btn-modal-cancel" onClick={() => setShowClearConfirm(false)}>Cancel</button>
+              <button className="btn-modal-delete" onClick={() => { setSelectedRecipes([]); setShowClearConfirm(false); }}>Clear All</button>
             </div>
           </div>
         </div>
