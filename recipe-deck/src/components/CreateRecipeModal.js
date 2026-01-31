@@ -42,6 +42,7 @@ function CreateRecipeModal({ onSave, onClose, recipe }) {
     e.preventDefault();
     if (!name.trim()) return;
     const validIngredients = ingredients.filter(ing => ing.name.trim() && ing.qty.trim());
+    if (validIngredients.length === 0) return;
     onSave({
       id: isEdit ? recipe.id : Date.now(),
       emoji,
@@ -124,7 +125,7 @@ function CreateRecipeModal({ onSave, onClose, recipe }) {
           </div>
           <div className="modal-actions">
             <button type="button" className="btn-modal-cancel" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-modal-save">{isEdit ? 'Save Changes' : 'Add Recipe'}</button>
+            <button type="submit" className="btn-modal-save" disabled={!ingredients.some(ing => ing.name.trim() && ing.qty.trim())}>{isEdit ? 'Save Changes' : 'Add Recipe'}</button>
           </div>
         </form>
       </div>

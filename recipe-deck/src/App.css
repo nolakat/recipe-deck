@@ -1127,9 +1127,13 @@ body::after {
   transition: all 0.2s ease;
 }
 
-.btn-modal-save:hover {
+.btn-modal-save:hover:not(:disabled) {
   background: #b34430;
   transform: translateY(-1px);
+}
+.btn-modal-save:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Card hover actions */

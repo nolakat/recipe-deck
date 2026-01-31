@@ -108,6 +108,76 @@ function App() {
     useSensor(TouchSensor, { activationConstraint: { distance: 8 } })
   );
 
+  const autoFillPlan = () => {
+    const shuffle = (arr) => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
+    const placements = [];
+    const usedIds = new Set();
+
+    const fillCategory = (category, minCoverage) => {
+      const available = recipes.filter(r => r.category === category && !usedIds.has(r.id));
+      const favs = available.filter(r => r.favorite);
+      const nonFavs = available.filter(r => !r.favorite);
+      // Put favorites first, then shuffle each group
+      const ordered = [...shuffle(favs), ...shuffle(nonFavs)];
+
+      let covered = 0;
+      for (const recipe of ordered) {
+        if (covered >= minCoverage) break;
+        const span = getSpan(recipe);
+        // Find the first day where we can place this recipe
+        const day = covered + 1;
+        if (day > 7) break;
+        placements.push({ id: recipe.id, day, slot: category });
+        usedIds.add(recipe.id);
+        covered += span;
+      }
+    };
+
+    fillCategory('breakfast', 6);
+    fillCategory('lunch', 6);
+    fillCategory('dinner', 6);
+    fillCategory('treats', 2);
+
+    // Ensure at least one favorite is included if any exist
+    const hasFavorite = placements.some(p => {
+      const r = recipes.find(rec => rec.id === p.id);
+      return r && r.favorite;
+    });
+    if (!hasFavorite) {
+      const anyFav = recipes.find(r => r.favorite && ['breakfast', 'lunch', 'dinner', 'treats'].includes(r.category));
+      if (anyFav) {
+        // Replace the last non-favorite in that category
+        const idx = placements.findIndex(p => p.slot === anyFav.category);
+        if (idx !== -1) {
+          usedIds.delete(placements[idx].id);
+          placements[idx] = { id: anyFav.id, day: placements[idx].day, slot: anyFav.category };
+          usedIds.add(anyFav.id);
+        }
+      }
+    }
+
+    // Add favorite staples to the pantry row
+    const favStaples = staples.filter(s => s.favorite);
+    for (const staple of favStaples) {
+      placements.push({ id: staple.id, day: 0, slot: 'pantry' });
+      // Add staple to shopping list
+      setShoppingList(prev => {
+        if (prev.some(s => s.name === staple.name && s.qty === staple.qty)) return prev;
+        return [...prev, { name: staple.name, qty: staple.qty }];
+      });
+    }
+
+    setSelectedRecipes(placements);
+  };
+
   // Combined lookup: find item in recipes or staples
   const findItem = useCallback((id) => {
     return recipes.find(r => r.id === id) || staples.find(s => s.id === id);
@@ -380,6 +450,7 @@ function App() {
           <div className={`selected-area${activeRecipe ? ' drop-target-active' : ''}`}>
             <div className="section-label">
               Meal Plan
+              <button className="clear-selected" onClick={autoFillPlan}>Auto-fill</button>
               {selectedRecipes.length > 0 && (
                 <button className="clear-selected" onClick={() => setSelectedRecipes([])}>Clear all</button>
               )}
