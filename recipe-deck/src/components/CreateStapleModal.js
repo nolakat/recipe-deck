@@ -6,6 +6,7 @@ function CreateStapleModal({ onSave, onClose, staple }) {
   const [emoji, setEmoji] = useState(staple ? staple.emoji : '🛒');
   const [qty, setQty] = useState(staple ? staple.qty : '');
   const [favorite, setFavorite] = useState(staple ? !!staple.favorite : false);
+  const [url, setUrl] = useState(staple ? staple.url || '' : '');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -17,6 +18,7 @@ function CreateStapleModal({ onSave, onClose, staple }) {
       qty: qty.trim(),
       category: 'pantry',
       favorite,
+      url: url.trim() || undefined,
     });
   };
 
@@ -41,6 +43,10 @@ function CreateStapleModal({ onSave, onClose, staple }) {
           <div className="modal-field">
             <label>Quantity</label>
             <input type="text" value={qty} onChange={e => setQty(e.target.value)} placeholder="e.g. 1 loaf" required />
+          </div>
+          <div className="modal-field">
+            <label>Product URL</label>
+            <input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://example.com/product" />
           </div>
           <div className="modal-field modal-checkbox-field">
             <label>

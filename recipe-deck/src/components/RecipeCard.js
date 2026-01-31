@@ -13,7 +13,7 @@ function CardContent({ recipe, onEdit, onDelete }) {
             {recipe.category === 'breakfast' ? '☀️' : recipe.category === 'lunch' ? '🌤️' : recipe.category === 'dinner' ? '🌙' : recipe.category === 'pantry' ? '🛒' : '🍬'}
           </span>
         </div>
-        <div className="card-title">{recipe.name}</div>
+        <div className="card-title">{recipe.name}{recipe.url && <a href={recipe.url} target="_blank" rel="noopener noreferrer" className="card-url-link" onClick={e => e.stopPropagation()} onPointerDown={e => e.stopPropagation()} title="Open recipe">🔗</a>}</div>
         {!isPantry && recipe.desc && <div className="card-desc">{recipe.desc}</div>}
         {isPantry && recipe.qty && <div className="card-qty">{recipe.qty}</div>}
       </div>
