@@ -349,6 +349,53 @@ body::after {
 .deck-container::-webkit-scrollbar { display: none; }
 .deck-container { scrollbar-width: none; }
 
+.deck-scroll-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.deck-scroll-wrapper .deck-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.deck-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(42,33,24,0.12);
+  background: var(--card-white);
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.deck-arrow:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.deck-arrow-left {
+  left: -18px;
+}
+
+.deck-arrow-right {
+  right: -18px;
+}
+
 .recipe-card {
   position: relative;
   width: 200px;

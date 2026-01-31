@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   DndContext, DragOverlay, useDroppable,
   PointerSensor, TouchSensor, useSensor, useSensors,
@@ -16,10 +16,14 @@ import CreateStapleModal from './components/CreateStapleModal';
 import ShoppingList from './components/ShoppingList';
 import './App.css';
 
-function DroppableArea({ id, className, children }) {
+function DroppableArea({ id, className, children, innerRef }) {
   const { setNodeRef, isOver } = useDroppable({ id });
+  const ref = useCallback((node) => {
+    setNodeRef(node);
+    if (innerRef) innerRef.current = node;
+  }, [setNodeRef, innerRef]);
   return (
-    <div ref={setNodeRef} className={`${className}${isOver ? ' drop-hover' : ''}`}>
+    <div ref={ref} className={`${className}${isOver ? ' drop-hover' : ''}`}>
       {children}
     </div>
   );
@@ -61,9 +65,16 @@ function parseDropId(idStr) {
   return null;
 }
 
+function loadState(key, fallback) {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch { return fallback; }
+}
+
 function App() {
-  const [recipes, setRecipes] = useState(recipesData);
-  const [staples, setStaples] = useState(staplesData);
+  const [recipes, setRecipes] = useState(() => loadState('rd-recipes', recipesData));
+  const [staples, setStaples] = useState(() => loadState('rd-staples', staplesData));
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateStapleModal, setShowCreateStapleModal] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState(null);
@@ -71,13 +82,21 @@ function App() {
   const [deletingRecipeId, setDeletingRecipeId] = useState(null);
 
   // selectedRecipes: [{ id, day, slot }, ...]
-  const [selectedRecipes, setSelectedRecipes] = useState([]);
-  const [shoppingList, setShoppingList] = useState([]);
+  const [selectedRecipes, setSelectedRecipes] = useState(() => loadState('rd-selected', []));
+  const [shoppingList, setShoppingList] = useState(() => loadState('rd-shopping', []));
   const [activeRecipe, setActiveRecipe] = useState(null);
   const fromRef = useRef(null);
   const snapshotRef = useRef([]);
+  const deckScrollRef = useRef(null);
 
-  const [people, setPeople] = useState(1);
+  const [people, setPeople] = useState(() => loadState('rd-people', 1));
+
+  // Persist state to localStorage
+  useEffect(() => { localStorage.setItem('rd-recipes', JSON.stringify(recipes)); }, [recipes]);
+  useEffect(() => { localStorage.setItem('rd-staples', JSON.stringify(staples)); }, [staples]);
+  useEffect(() => { localStorage.setItem('rd-selected', JSON.stringify(selectedRecipes)); }, [selectedRecipes]);
+  useEffect(() => { localStorage.setItem('rd-shopping', JSON.stringify(shoppingList)); }, [shoppingList]);
+  useEffect(() => { localStorage.setItem('rd-people', JSON.stringify(people)); }, [people]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [recipesCollapsed, setRecipesCollapsed] = useState(false);
   const [staplesCollapsed, setStaplesCollapsed] = useState(false);
@@ -157,10 +176,23 @@ function App() {
       const isDeckZone = overIdStr === 'deck-zone' || overIdStr === 'staple-deck-zone';
 
       if (from === 'selected' && isDeckZone) {
+        // If removing a staple from the plan, remove it from shopping list
+        const item = findItem(id);
+        if (item && item.category === 'pantry') {
+          setShoppingList(prev => prev.filter(s => !(s.name === item.name && s.qty === item.qty)));
+        }
         setSelectedRecipes(prev => prev.filter(e => e.id !== id));
       } else if (from === 'selected' && parsed && recipeMatchesSlot(id, parsed.slot)) {
         setSelectedRecipes(prev => prev.map(e => e.id === id ? { ...e, day: parsed.day, slot: parsed.slot } : e));
       } else if ((from === 'deck' || from === 'staple-deck') && parsed && recipeMatchesSlot(id, parsed.slot)) {
+        // If placing a staple on the plan, add it to shopping list
+        const item = findItem(id);
+        if (item && item.category === 'pantry') {
+          setShoppingList(prev => {
+            if (prev.some(s => s.name === item.name && s.qty === item.qty)) return prev;
+            return [...prev, { name: item.name, qty: item.qty }];
+          });
+        }
         setSelectedRecipes(prev => {
           const exists = prev.some(e => e.id === id);
           if (exists) return prev.map(e => e.id === id ? { ...e, day: parsed.day, slot: parsed.slot } : e);
@@ -393,19 +425,23 @@ function App() {
                     </button>
                   ))}
                 </div>
-                <DroppableArea id="deck-zone" className="deck-container">
-                  <SortableContext items={filteredDeckRecipes.map(r => r.id)} strategy={horizontalListSortingStrategy}>
-                    {filteredDeckRecipes.length > 0 ? (
-                      filteredDeckRecipes.map((recipe) => (
-                        <SortableCard key={recipe.id} recipe={recipe} from="deck" onEdit={setEditingRecipe} onDelete={setDeletingRecipeId} />
-                      ))
-                    ) : (
-                      <div className="drop-zone-prompt">
-                        {deckRecipes.length === 0 ? 'All cards selected!' : 'No cards in this category'}
-                      </div>
-                    )}
-                  </SortableContext>
-                </DroppableArea>
+                <div className="deck-scroll-wrapper">
+                  <button className="deck-arrow deck-arrow-left" onClick={() => deckScrollRef.current?.scrollBy({ left: -432, behavior: 'smooth' })}>‹</button>
+                  <DroppableArea id="deck-zone" className="deck-container" innerRef={deckScrollRef}>
+                    <SortableContext items={filteredDeckRecipes.map(r => r.id)} strategy={horizontalListSortingStrategy}>
+                      {filteredDeckRecipes.length > 0 ? (
+                        filteredDeckRecipes.map((recipe) => (
+                          <SortableCard key={recipe.id} recipe={recipe} from="deck" onEdit={setEditingRecipe} onDelete={setDeletingRecipeId} />
+                        ))
+                      ) : (
+                        <div className="drop-zone-prompt">
+                          {deckRecipes.length === 0 ? 'All cards selected!' : 'No cards in this category'}
+                        </div>
+                      )}
+                    </SortableContext>
+                  </DroppableArea>
+                  <button className="deck-arrow deck-arrow-right" onClick={() => deckScrollRef.current?.scrollBy({ left: 432, behavior: 'smooth' })}>›</button>
+                </div>
               </>
             )}
           </div>
