@@ -14,6 +14,7 @@ import IngredientCard from './components/IngredientCard';
 import CreateRecipeModal from './components/CreateRecipeModal';
 import CreateStapleModal from './components/CreateStapleModal';
 import ShoppingList from './components/ShoppingList';
+import GroceryLedger from './components/GroceryLedger';
 import './App.css';
 
 function DroppableArea({ id, className, children, innerRef }) {
@@ -91,6 +92,8 @@ function App() {
   const fileInputRef = useRef(null);
 
   const [people, setPeople] = useState(() => loadState('rd-people', 1));
+  const [groceryLedger, setGroceryLedger] = useState(() => loadState('rd-ledger', []));
+  const [showLedger, setShowLedger] = useState(false);
 
   // Persist state to localStorage
   useEffect(() => { localStorage.setItem('rd-recipes', JSON.stringify(recipes)); }, [recipes]);
@@ -98,6 +101,7 @@ function App() {
   useEffect(() => { localStorage.setItem('rd-selected', JSON.stringify(selectedRecipes)); }, [selectedRecipes]);
   useEffect(() => { localStorage.setItem('rd-shopping', JSON.stringify(shoppingList)); }, [shoppingList]);
   useEffect(() => { localStorage.setItem('rd-people', JSON.stringify(people)); }, [people]);
+  useEffect(() => { localStorage.setItem('rd-ledger', JSON.stringify(groceryLedger)); }, [groceryLedger]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [recipesCollapsed, setRecipesCollapsed] = useState(false);
   const [staplesCollapsed, setStaplesCollapsed] = useState(false);
@@ -311,6 +315,14 @@ function App() {
     setShoppingList(prev =>
       prev.map((item, i) => i === index ? { ...item, checked: !item.checked } : item)
     );
+  };
+
+  const addLedgerEntry = (entry) => {
+    setGroceryLedger(prev => [...prev, { ...entry, id: Date.now().toString() }]);
+  };
+
+  const deleteLedgerEntry = (id) => {
+    setGroceryLedger(prev => prev.filter(e => e.id !== id));
   };
 
   const exportData = () => {
@@ -697,11 +709,19 @@ function App() {
         onToggleCheck={toggleCheck}
         onRemove={removeItem}
         onClear={clearList}
-        onAddAll={addAllIngredients}
-        hasActiveRecipe={selectedRecipes.length > 0}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onOpenLedger={() => setShowLedger(true)}
       />
+
+      {showLedger && (
+        <GroceryLedger
+          entries={groceryLedger}
+          onAdd={addLedgerEntry}
+          onDelete={deleteLedgerEntry}
+          onClose={() => setShowLedger(false)}
+        />
+      )}
     </div>
   );
 }

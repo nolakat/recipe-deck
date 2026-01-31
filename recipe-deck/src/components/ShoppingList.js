@@ -1,6 +1,6 @@
 import React from 'react';
 
-function ShoppingList({ items, onToggleCheck, onRemove, onClear, onAddAll, hasActiveRecipe, isOpen, onClose }) {
+function ShoppingList({ items, onToggleCheck, onRemove, onClear, isOpen, onClose, onOpenLedger }) {
   return (
     <div className={`sidebar${isOpen ? ' open' : ''}`}>
       <div className="sidebar-header">
@@ -28,14 +28,14 @@ function ShoppingList({ items, onToggleCheck, onRemove, onClear, onAddAll, hasAc
           ))
         )}
       </div>
-      {items.length > 0 && (
-        <div className="sidebar-actions">
-          <button className="btn btn-clear" onClick={onClear}>Clear All</button>
-          {hasActiveRecipe && (
-            <button className="btn btn-add-all" onClick={onAddAll}>+ Add All</button>
-          )}
-        </div>
-      )}
+      <div className="sidebar-actions">
+        {items.length > 0 && (
+          <>
+            <button className="btn btn-clear" onClick={onClear}>Clear All</button>
+          </>
+        )}
+        <button className="btn btn-ledger" onClick={onOpenLedger}>Grocery Ledger</button>
+      </div>
     </div>
   );
 }
