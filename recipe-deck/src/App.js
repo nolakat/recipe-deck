@@ -88,6 +88,7 @@ function App() {
   const fromRef = useRef(null);
   const snapshotRef = useRef([]);
   const deckScrollRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const [people, setPeople] = useState(() => loadState('rd-people', 1));
 
@@ -242,6 +243,43 @@ function App() {
     );
   };
 
+  const exportData = () => {
+    const data = JSON.stringify({ recipes, staples }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'recipe-deck-export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importData = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.recipes) {
+          setRecipes(prev => {
+            const existingIds = new Set(prev.map(r => r.id));
+            const newItems = data.recipes.filter(r => !existingIds.has(r.id));
+            return [...prev, ...newItems];
+          });
+        }
+        if (data.staples) {
+          setStaples(prev => {
+            const existingIds = new Set(prev.map(s => s.id));
+            const newItems = data.staples.filter(s => !existingIds.has(s.id));
+            return [...prev, ...newItems];
+          });
+        }
+      } catch {
+        alert('Invalid file format.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleDeleteRecipe = (id) => {
     setRecipes(prev => prev.filter(r => r.id !== id));
     setStaples(prev => prev.filter(s => s.id !== id));
@@ -314,6 +352,20 @@ function App() {
                 </button>
               ))}
             </div>
+          </div>
+          <div className="toolbar-group">
+            <button className="toolbar-pill" onClick={exportData}>Export</button>
+            <button className="toolbar-pill" onClick={() => fileInputRef.current?.click()}>Import</button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                if (e.target.files[0]) importData(e.target.files[0]);
+                e.target.value = '';
+              }}
+            />
           </div>
         </div>
 
