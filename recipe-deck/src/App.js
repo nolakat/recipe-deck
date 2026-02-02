@@ -15,6 +15,7 @@ import CreateRecipeModal from './components/CreateRecipeModal';
 import CreateStapleModal from './components/CreateStapleModal';
 import ShoppingList from './components/ShoppingList';
 import GroceryLedger from './components/GroceryLedger';
+import SavedPlans from './components/SavedPlans';
 import './App.css';
 
 function DroppableArea({ id, className, children, innerRef }) {
@@ -94,6 +95,8 @@ function App() {
   const [people, setPeople] = useState(() => loadState('rd-people', 1));
   const [groceryLedger, setGroceryLedger] = useState(() => loadState('rd-ledger', []));
   const [showLedger, setShowLedger] = useState(false);
+  const [savedPlans, setSavedPlans] = useState(() => loadState('rd-saved-plans', []));
+  const [showSavedPlans, setShowSavedPlans] = useState(false);
 
   // Persist state to localStorage
   useEffect(() => { localStorage.setItem('rd-recipes', JSON.stringify(recipes)); }, [recipes]);
@@ -102,6 +105,7 @@ function App() {
   useEffect(() => { localStorage.setItem('rd-shopping', JSON.stringify(shoppingList)); }, [shoppingList]);
   useEffect(() => { localStorage.setItem('rd-people', JSON.stringify(people)); }, [people]);
   useEffect(() => { localStorage.setItem('rd-ledger', JSON.stringify(groceryLedger)); }, [groceryLedger]);
+  useEffect(() => { localStorage.setItem('rd-saved-plans', JSON.stringify(savedPlans)); }, [savedPlans]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [recipesCollapsed, setRecipesCollapsed] = useState(false);
   const [staplesCollapsed, setStaplesCollapsed] = useState(false);
@@ -112,6 +116,19 @@ function App() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { distance: 8 } })
   );
+
+  const savePlan = (date) => {
+    setSavedPlans(prev => [...prev, { id: Date.now().toString(), date, plan: [...selectedRecipes] }]);
+  };
+
+  const loadPlan = (id) => {
+    const plan = savedPlans.find(p => p.id === id);
+    if (plan) setSelectedRecipes([...plan.plan]);
+  };
+
+  const deleteSavedPlan = (id) => {
+    setSavedPlans(prev => prev.filter(p => p.id !== id));
+  };
 
   const autoFillPlan = () => {
     const shuffle = (arr) => {
@@ -422,6 +439,7 @@ function App() {
             </div>
           </div>
           <div className="toolbar-group">
+            <button className="toolbar-pill" onClick={() => setShowSavedPlans(true)}>Saved Plans</button>
             <button className="toolbar-pill" onClick={exportData}>Export</button>
             <button className="toolbar-pill" onClick={() => fileInputRef.current?.click()}>Import</button>
             <input
@@ -715,6 +733,17 @@ function App() {
         onClose={() => setSidebarOpen(false)}
         onOpenLedger={() => setShowLedger(true)}
       />
+
+      {showSavedPlans && (
+        <SavedPlans
+          savedPlans={savedPlans}
+          selectedRecipes={selectedRecipes}
+          onSave={(date) => { savePlan(date); setShowSavedPlans(false); }}
+          onLoad={loadPlan}
+          onDelete={deleteSavedPlan}
+          onClose={() => setShowSavedPlans(false)}
+        />
+      )}
 
       {showLedger && (
         <GroceryLedger
