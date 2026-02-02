@@ -701,7 +701,7 @@ body::after {
   position: fixed;
   bottom: 28px;
   right: 28px;
-  z-index: 800;
+  z-index: 901;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -1572,6 +1572,228 @@ body::after {
   color: var(--accent);
   background: rgba(196,85,58,0.08);
 }
+
+/* Household Panel */
+.household-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 340px;
+  height: 100vh;
+  background: var(--ink);
+  color: var(--cream);
+  padding: 32px 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 900;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 8px 0 30px rgba(42,33,24,0);
+}
+
+.household-panel.open {
+  transform: translateX(0);
+  box-shadow: 8px 0 30px rgba(42,33,24,0.25);
+}
+
+.household-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(42,33,24,0.3);
+  z-index: 899;
+  animation: fadeIn 0.2s ease;
+}
+
+.household-toggle-btn {
+  position: fixed;
+  bottom: 28px;
+  left: 28px;
+  z-index: 901;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ink);
+  color: var(--cream);
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(42,33,24,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.household-toggle-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(42,33,24,0.4);
+}
+
+.household-add-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  min-width: 0;
+}
+
+.household-add-form .household-input {
+  min-width: 0;
+}
+
+.household-input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(245,240,232,0.15);
+  background: rgba(245,240,232,0.08);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--cream);
+  transition: border-color 0.2s ease;
+}
+
+.household-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.household-input::placeholder {
+  color: rgba(245,240,232,0.35);
+}
+
+.household-qty-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.qty-step-btn {
+  width: 28px;
+  height: 36px;
+  border: 1px solid rgba(245,240,232,0.15);
+  background: rgba(245,240,232,0.08);
+  color: var(--cream);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.qty-step-btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.qty-step-btn:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.qty-step-btn:hover {
+  background: rgba(245,240,232,0.18);
+}
+
+.qty-step-value {
+  width: 30px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  color: var(--cream);
+  background: rgba(245,240,232,0.05);
+  border-top: 1px solid rgba(245,240,232,0.15);
+  border-bottom: 1px solid rgba(245,240,232,0.15);
+}
+
+.household-add-btn {
+  width: 40px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.household-add-btn:hover:not(:disabled) {
+  background: #b34430;
+}
+
+.household-add-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.household-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.household-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(245,240,232,0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.household-item:hover {
+  background: rgba(245,240,232,0.06);
+}
+
+.household-item.added {
+  border-color: var(--green);
+  background: rgba(74,124,89,0.2);
+}
+
+.household-item-name {
+  flex: 1;
+  font-size: 14px;
+  color: rgba(245,240,232,0.85);
+}
+
+.household-item-qty {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--accent-warm);
+}
+
+.household-item-delete {
+  background: none;
+  border: none;
+  color: rgba(245,240,232,0.2);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.household-item:hover .household-item-delete {
+  opacity: 1;
+}
+
+.household-item-delete:hover {
+  color: var(--accent);
+  background: rgba(196,85,58,0.15);
+}
+
+.household-panel::-webkit-scrollbar { width: 4px; }
+.household-panel::-webkit-scrollbar-track { background: transparent; }
+.household-panel::-webkit-scrollbar-thumb { background: rgba(245,240,232,0.15); border-radius: 2px; }
 
 .ledger-total {
   display: flex;

@@ -14,6 +14,7 @@ import IngredientCard from './components/IngredientCard';
 import CreateRecipeModal from './components/CreateRecipeModal';
 import CreateStapleModal from './components/CreateStapleModal';
 import ShoppingList from './components/ShoppingList';
+import HouseholdPanel from './components/HouseholdPanel';
 import GroceryLedger from './components/GroceryLedger';
 import SavedPlans from './components/SavedPlans';
 import './App.css';
@@ -97,6 +98,8 @@ function App() {
   const [showLedger, setShowLedger] = useState(false);
   const [savedPlans, setSavedPlans] = useState(() => loadState('rd-saved-plans', []));
   const [showSavedPlans, setShowSavedPlans] = useState(false);
+  const [householdItems, setHouseholdItems] = useState(() => loadState('rd-household', []));
+  const [showHousehold, setShowHousehold] = useState(false);
 
   // Persist state to localStorage
   useEffect(() => { localStorage.setItem('rd-recipes', JSON.stringify(recipes)); }, [recipes]);
@@ -106,6 +109,7 @@ function App() {
   useEffect(() => { localStorage.setItem('rd-people', JSON.stringify(people)); }, [people]);
   useEffect(() => { localStorage.setItem('rd-ledger', JSON.stringify(groceryLedger)); }, [groceryLedger]);
   useEffect(() => { localStorage.setItem('rd-saved-plans', JSON.stringify(savedPlans)); }, [savedPlans]);
+  useEffect(() => { localStorage.setItem('rd-household', JSON.stringify(householdItems)); }, [householdItems]);
   const [activeFilter, setActiveFilter] = useState(null);
   const [recipesCollapsed, setRecipesCollapsed] = useState(false);
   const [staplesCollapsed, setStaplesCollapsed] = useState(false);
@@ -326,6 +330,14 @@ function App() {
 
   const deleteLedgerEntry = (id) => {
     setGroceryLedger(prev => prev.filter(e => e.id !== id));
+  };
+
+  const addHouseholdItem = (name, qty) => {
+    setHouseholdItems(prev => [...prev, { id: Date.now().toString(), name, qty }]);
+  };
+
+  const removeHouseholdItem = (id) => {
+    setHouseholdItems(prev => prev.filter(item => item.id !== id));
   };
 
   const exportData = () => {
@@ -718,11 +730,27 @@ function App() {
         </div>
       )}
 
+      <button className="household-toggle-btn" onClick={() => setShowHousehold(o => !o)} style={showHousehold ? { left: 'calc(340px + 28px)' } : undefined}>
+        🧴
+      </button>
+
+      {(showHousehold || sidebarOpen) && (
+        <div className="sidebar-backdrop" onClick={() => { setShowHousehold(false); setSidebarOpen(false); }} />
+      )}
+
+      <HouseholdPanel
+        items={householdItems}
+        shoppingList={shoppingList}
+        onAdd={addHouseholdItem}
+        onRemove={removeHouseholdItem}
+        onToggle={toggleIngredient}
+        isOpen={showHousehold}
+        onClose={() => setShowHousehold(false)}
+      />
+
       <button className="sidebar-toggle-btn" onClick={() => setSidebarOpen(o => !o)}>
         🛒 {shoppingList.length > 0 && <span className="sidebar-badge">{shoppingList.length}</span>}
       </button>
-
-      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
 
       <ShoppingList
         items={shoppingList}
