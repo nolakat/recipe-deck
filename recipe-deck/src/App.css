@@ -1630,6 +1630,10 @@ body::after {
   box-shadow: 0 6px 20px rgba(42,33,24,0.4);
 }
 
+.household-toggle-btn.panel-open {
+  left: calc(340px + 28px);
+}
+
 .household-add-form {
   display: flex;
   gap: 8px;
@@ -1806,4 +1810,245 @@ body::after {
   font-size: 14px;
   font-weight: 500;
   color: var(--ink);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .main {
+    padding: 24px 16px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+  }
+
+  .header p {
+    font-size: 13px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .toolbar-group {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .section-label {
+    font-size: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Meal plan grid - horizontal scroll */
+  .day-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .day-grid::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .day-grid::-webkit-scrollbar-thumb {
+    background: rgba(42,33,24,0.2);
+    border-radius: 2px;
+  }
+
+  .slot-labels {
+    flex-shrink: 0;
+    width: 28px;
+  }
+
+  .day-column {
+    flex-shrink: 0;
+    min-width: 90px;
+  }
+
+  .day-header {
+    font-size: 10px;
+    height: 24px;
+  }
+
+  .slot-label {
+    font-size: 14px;
+    min-height: 50px;
+  }
+
+  .meal-slot {
+    min-height: 50px;
+    padding: 3px;
+  }
+
+  .day-card-wrapper .recipe-card {
+    min-height: 40px;
+    padding: 6px;
+  }
+
+  .day-card-wrapper .recipe-card .card-emoji {
+    font-size: 14px;
+  }
+
+  .day-card-wrapper .recipe-card .card-title {
+    font-size: 10px;
+  }
+
+  /* Pantry row */
+  .pantry-slot {
+    grid-column: unset;
+    min-height: 44px;
+  }
+
+  .pantry-row-label {
+    grid-column: unset;
+  }
+
+  /* Recipe deck */
+  .deck-area {
+    margin-bottom: 32px;
+  }
+
+  .filter-pills {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .filter-pill {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .deck-scroll-wrapper {
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+
+  .deck-arrow {
+    display: none;
+  }
+
+  .deck-container {
+    gap: 12px;
+    padding: 12px 4px;
+    min-height: 180px;
+  }
+
+  .recipe-card {
+    width: 150px;
+    min-width: 150px;
+    height: 160px;
+    padding: 16px 14px;
+  }
+
+  .recipe-card .card-emoji {
+    font-size: 22px;
+  }
+
+  .recipe-card .card-title {
+    font-size: 14px;
+  }
+
+  .recipe-card .card-desc {
+    display: none;
+  }
+
+  .recipe-card .card-meta {
+    font-size: 10px;
+    gap: 8px;
+  }
+
+  /* Staple deck */
+  .staple-grid {
+    gap: 10px;
+    padding: 12px 4px;
+  }
+
+  .staple-grid .recipe-card {
+    width: 120px;
+    min-width: 120px;
+    height: 120px;
+  }
+
+  /* Ingredients */
+  .ingredients-container {
+    gap: 8px;
+  }
+
+  .ingredient-card {
+    padding: 12px 14px;
+    min-width: 150px;
+    gap: 10px;
+  }
+
+  .ingredient-card .ing-qty {
+    font-size: 12px;
+    min-width: 40px;
+  }
+
+  .ingredient-card .ing-name {
+    font-size: 13px;
+  }
+
+  /* Sidebars - full width */
+  .sidebar,
+  .household-panel {
+    width: 100%;
+  }
+
+  .sidebar-toggle-btn,
+  .household-toggle-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    bottom: 20px;
+  }
+
+  .sidebar-toggle-btn {
+    right: 20px;
+  }
+
+  .household-toggle-btn {
+    left: 20px;
+  }
+
+  .household-toggle-btn.panel-open {
+    left: 20px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Modals */
+  .modal {
+    width: 95vw;
+    padding: 24px 20px;
+    max-height: 90vh;
+  }
+
+  .modal-header h2 {
+    font-size: 20px;
+  }
+
+  .modal-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ingredient-row {
+    flex-wrap: wrap;
+  }
+
+  .ingredient-row input.ingredient-qty-input {
+    width: 70px;
+  }
 }

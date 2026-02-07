@@ -730,7 +730,7 @@ function App() {
         </div>
       )}
 
-      <button className="household-toggle-btn" onClick={() => setShowHousehold(o => !o)} style={showHousehold ? { left: 'calc(340px + 28px)' } : undefined}>
+      <button className={`household-toggle-btn${showHousehold ? ' panel-open' : ''}`} onClick={() => setShowHousehold(o => !o)}>
         🧴
       </button>
 
