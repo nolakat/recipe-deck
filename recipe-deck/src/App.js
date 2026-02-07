@@ -113,6 +113,7 @@ function App() {
   const [activeFilter, setActiveFilter] = useState(null);
   const [recipesCollapsed, setRecipesCollapsed] = useState(false);
   const [staplesCollapsed, setStaplesCollapsed] = useState(false);
+  const [stapleSearch, setStapleSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -402,6 +403,9 @@ function App() {
   const selectedIds = selectedRecipes.map(e => e.id);
   const deckRecipes = recipes.filter(r => !selectedIds.includes(r.id));
   const deckStaples = staples.filter(s => !selectedIds.includes(s.id));
+  const filteredDeckStaples = stapleSearch
+    ? deckStaples.filter(s => s.name.toLowerCase().includes(stapleSearch.toLowerCase()))
+    : deckStaples;
 
   const categories = [
     { key: null, label: 'All' },
@@ -604,10 +608,18 @@ function App() {
               <button className="btn-add-recipe" onClick={() => setShowCreateStapleModal(true)}>+ Add Staple</button>
             </div>
             {!staplesCollapsed && (
+              <>
+              <input
+                type="text"
+                placeholder="Search staples..."
+                value={stapleSearch}
+                onChange={e => setStapleSearch(e.target.value)}
+                className="staple-search"
+              />
               <DroppableArea id="staple-deck-zone" className="staple-grid">
-                <SortableContext items={deckStaples.map(s => s.id)} strategy={horizontalListSortingStrategy}>
-                  {deckStaples.length > 0 ? (
-                    deckStaples.map((staple) => (
+                <SortableContext items={filteredDeckStaples.map(s => s.id)} strategy={horizontalListSortingStrategy}>
+                  {filteredDeckStaples.length > 0 ? (
+                    filteredDeckStaples.map((staple) => (
                       <SortableCard
                         key={staple.id}
                         recipe={staple}
@@ -617,10 +629,13 @@ function App() {
                       />
                     ))
                   ) : (
-                    <div className="drop-zone-prompt">All staples on the plan!</div>
+                    <div className="drop-zone-prompt">
+                      {stapleSearch ? 'No matching staples' : 'All staples on the plan!'}
+                    </div>
                   )}
                 </SortableContext>
               </DroppableArea>
+              </>
             )}
           </div>
 

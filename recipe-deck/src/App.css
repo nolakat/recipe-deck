@@ -1276,6 +1276,29 @@ body::after {
   border-radius: 12px;
 }
 
+.staple-search {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(42,33,24,0.15);
+  background: var(--card-white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.staple-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.staple-search::placeholder {
+  color: var(--ink-light);
+}
+
 /* Emoji picker */
 .emoji-picker {
   display: flex;
